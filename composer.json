@@ -1,0 +1,33 @@
+{
+    "name": "mts88/laravel-zipkin",
+    "version": "1.0.0",
+    "type": "library",
+    "description": "The Laravel Zipkin.",
+    "keywords": [
+        "zipkin",
+        "laravel"
+    ],
+    "license": "MIT",
+    "require": {
+        "php": "^7.1",
+        "openzipkin/zipkin": "^1.3.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "Mts88\\LaravelZipkin\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Mts88\\LaravelZipkin\\Providers\\LaravelZipkinServiceProvider"
+            ],
+            "aliases": {
+                "Zipkin": "Mts88\\LaravelZipkin\\Facades\\Zipkin"
+            }
+
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
