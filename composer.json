@@ -1,17 +1,26 @@
 {
     "name": "mts88/laravel-zipkin",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "type": "library",
-    "description": "The Laravel Zipkin.",
+    "description": "Zipkin Library for Laravel.",
     "keywords": [
         "zipkin",
-        "laravel"
+        "laravel",
+        "log",
+        "openzipkin"
     ],
     "license": "MIT",
     "require": {
         "php": "^7.1",
         "openzipkin/zipkin": "^1.3.4"
     },
+    "authors": [
+        {
+            "name": "Francesca Motisi",
+            "email": "fsca.motisi@gmail.com",
+            "role": "Developer"
+        }
+    ],
     "autoload": {
         "psr-4": {
             "Mts88\\LaravelZipkin\\": "src/"

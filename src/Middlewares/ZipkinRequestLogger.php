@@ -3,7 +3,7 @@
 namespace Mts88\LaravelZipkin\Middlewares;
 
 use Closure;
-use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use Mts88\LaravelZipkin\Services\ZipkinService;
 
 class ZipkinRequestLogger
@@ -24,17 +24,22 @@ class ZipkinRequestLogger
      */
     public function handle($request, Closure $next)
     {
-        $route = Route::getRoutes()->match($request);
 
-        $this->zipkinService->setTracer($route->getName(), $request->ip());
+        if (in_array($request->method(), $this->zipkinService->getAllowedMethods())) {
 
-        foreach ($request->query() as $key => $value) {
-            $tags["query." . $key] = $value;
+            $this->zipkinService->setTracer($request->route()->getName(), $request->ip());
+
+            foreach ($request->query() as $key => $value) {
+                $tags["query." . $key] = $value;
+            }
+
+            $this->zipkinService->createRootSpan('incoming_request', ($tags ?? []))
+                ->setRootSpanMethod($request->method())
+                ->setRootSpanPath($request->path())
+                ->setRootAuthUser(Auth::user())
+                ->setRootSpanTag('request.headers', json_encode($request->headers->all()))
+                ->setRootSpanTag('request.body', json_encode($request->all()));
         }
-
-        $this->zipkinService->setRootSpan('incoming_request', ($tags ?? []))
-            ->setRootSpanMethod($request->method())
-            ->setRootSpanPath($request->path());
 
         return $next($request);
     }
@@ -42,11 +47,9 @@ class ZipkinRequestLogger
     public function terminate($request, $response)
     {
 
-        $this->zipkinService->setRootSpanStatusCode($response->getStatusCode())
-            ->getRootSpan()
-            ->finish();
-
-        $this->zipkinService->getTracer()->flush();
+        if (!is_null($this->zipkinService->getRootSpan())) {
+            $this->zipkinService->setRootSpanStatusCode($response->getStatusCode())->closeSpan();
+        }
 
     }
 

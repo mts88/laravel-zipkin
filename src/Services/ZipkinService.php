@@ -2,6 +2,7 @@
 
 namespace Mts88\LaravelZipkin\Services;
 
+use App\Models\Auth\User;
 use const Zipkin\Kind\SERVER;
 use Zipkin\Span;
 use Zipkin\Tracer;
@@ -18,12 +19,15 @@ class ZipkinService
     const ROOT_SPAN_HTTP_STATUS_CODE = "http.status_code";
     const ROOT_SPAN_HTTP_PATH        = "http.path";
     const ROOT_SPAN_HTTP_METHOD      = "http.method";
+    const ROOT_SPAN_USER_USERNAME    = "user.username";
+    const ROOT_SPAN_RESPONSE_STATUS  = "response.status";
+    const ROOT_SPAN_RESPONSE_MESSAGE = "response.message";
 
     private $config;
     private $httpReporterURL;
     private $tracing;
     private $tracer;
-    private $rootSpan;
+    private $rootSpan = null;
 
     public function __construct()
     {
@@ -47,7 +51,13 @@ class ZipkinService
         return $this->tracer;
     }
 
-    public function setRootSpan(string $name, array $tags)
+    public function setRootSpan($span)
+    {
+        $this->rootSpan = $span;
+        return $this;
+    }
+
+    public function createRootSpan(string $name, array $tags = [])
     {
         /* Always sample traces */
         $defaultSamplingFlags = DefaultSamplingFlags::createAsSampled();
@@ -59,7 +69,7 @@ class ZipkinService
         $this->rootSpan->setKind(SERVER);
 
         foreach ($tags as $key => $value) {
-            $this->rootSpan->tag($key, $value);
+            $this->setRootSpanTag($key, $value);
         }
 
         return $this;
@@ -70,28 +80,44 @@ class ZipkinService
         return $this->rootSpan;
     }
 
+    public function getAllowedMethods()
+    {
+        return $this->config['allowed_methods'];
+    }
+
     public function setRootSpanPath(string $path)
     {
-        $this->rootSpan->tag(self::ROOT_SPAN_HTTP_PATH, $path);
+        $this->setRootSpanTag(self::ROOT_SPAN_HTTP_PATH, $path);
 
         return $this;
     }
 
     public function setRootSpanMethod(string $method)
     {
-        $this->rootSpan->tag(self::ROOT_SPAN_HTTP_METHOD, $method);
+        $this->setRootSpanTag(self::ROOT_SPAN_HTTP_METHOD, $method);
         return $this;
     }
 
     public function setRootSpanStatusCode(string $code)
     {
-        $this->rootSpan->tag(self::ROOT_SPAN_HTTP_STATUS_CODE, $code);
+        $this->setRootSpanTag(self::ROOT_SPAN_HTTP_STATUS_CODE, $code);
         return $this;
     }
 
-    public function setRootSpanAnnotation($key, $value)
+    public function setRootAuthUser(?User $user)
     {
-        $this->rootSpan->annotate($key, $value);
+        $this->setRootSpanTag(self::ROOT_SPAN_USER_USERNAME, $user->username ?? 'anonymous');
+        return $this;
+    }
+
+    public function setRootSpanTag($key, $value)
+    {
+        $this->rootSpan->tag($key, $value);
+        return $this;
+    }
+    public function setRootSpanAnnotation($key, $timestamp)
+    {
+        $this->rootSpan->annotate($key, $timestamp);
         return $this;
     }
 
@@ -130,4 +156,18 @@ class ZipkinService
         return $tracing;
 
     }
+
+    public function setRootResponse($status, $message = "")
+    {
+        $this->setRootSpanTag(self::ROOT_SPAN_RESPONSE_STATUS, $status)
+            ->setRootSpanTag(self::ROOT_SPAN_RESPONSE_MESSAGE, $message);
+        return $this;
+    }
+
+    public function closeSpan()
+    {
+        $this->getRootSpan()->finish();
+        $this->getTracer()->flush();
+    }
+
 }

@@ -4,6 +4,7 @@ namespace Mts88\LaravelZipkin\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
 use Mts88\LaravelZipkin\Services\ZipkinService;
 use Zipkin\Timestamp;
@@ -11,7 +12,7 @@ use Zipkin\Timestamp;
 class ZipkinBaseController extends Controller
 {
     private $span;
-    private $zipkinService;
+    public $zipkinService;
 
     public function __construct(ZipkinService $zipkinService)
     {
@@ -21,6 +22,10 @@ class ZipkinBaseController extends Controller
 
     public function callAction($method, $parameters)
     {
+        if (is_null($this->zipkinService->getRootSpan())) {
+            return parent::callAction($method, $parameters);
+        }
+
         $classCaller = get_called_class();
         $className   = Arr::last(explode("\\", $classCaller));
 
@@ -33,6 +38,7 @@ class ZipkinBaseController extends Controller
         $this->span->start(Timestamp\now());
         $this->span->tag("class", $classCaller);
         $this->span->tag("method", $method);
+        $this->span->tag("user", Auth::user()->username ?? 'anonymous');
 
         $action = parent::callAction($method, $parameters);
 
