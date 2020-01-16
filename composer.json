@@ -4,10 +4,18 @@
     "type": "library",
     "description": "Zipkin Library for Laravel.",
     "keywords": [
-        "zipkin",
         "laravel",
-        "log",
-        "openzipkin"
+        "zipkin",
+        "openzipkin",
+        "openzipkin-php",
+        "zipkin-client",
+        "laravel-zipkin",
+        "logging",
+        "logger-middleware",
+        "logger",
+        "distributed-log",
+        "distributed-tracing",
+        "distributed-logging-system"
     ],
     "license": "MIT",
     "require": {
