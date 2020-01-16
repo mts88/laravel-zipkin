@@ -1,6 +1,6 @@
 {
     "name": "mts88/laravel-zipkin",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "type": "library",
     "description": "Zipkin Library for Laravel.",
     "keywords": [
